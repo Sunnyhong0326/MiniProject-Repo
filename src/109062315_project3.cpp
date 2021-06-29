@@ -127,7 +127,7 @@ class State{
             winner = s.winner;
             heuristic = s.heuristic;
         }
-        int evaluate_unbalanced_edge(){
+        /*int evaluate_unbalanced_edge(){
             int weak_side=0;
             if(board[0][0]!=player&&board[0][7]!=player){
                 int disc = 0;
@@ -158,7 +158,7 @@ class State{
                 if(disc!=6)weak_side++;
             }
             return weak_side;
-        }
+        }*/
         int evaluate_determined(){
             int exact = 0;
             if(board[0][0]==player){
@@ -172,7 +172,7 @@ class State{
                     exact++;
                 }
             }
-            else{
+            else if(board[0][0]==EMPTY){
                 if(board[0][1]==player)exact--;
                 if(board[1][0]==player)exact--;
                 if(board[1][1]==player)exact-=2;
@@ -188,7 +188,7 @@ class State{
                     exact++;
                 }
             }
-            else{
+            else if(board[0][7]==EMPTY){
                 if(board[0][6]==player)exact--;
                 if(board[1][7]==player)exact--;
                 if(board[1][6]==player)exact-=2;
@@ -204,7 +204,7 @@ class State{
                     exact++;
                 }
             }
-            else{
+            else if(board[7][0]==EMPTY){
                 if(board[6][0]==player)exact--;
                 if(board[7][1]==player)exact--;
                 if(board[6][1]==player)exact-=2;
@@ -220,7 +220,7 @@ class State{
                     exact++;
                 }
             }
-            else{
+            else if(board[7][7]==EMPTY){
                 if(board[6][7]==player)exact--;
                 if(board[7][6]==player)exact--;
                 if(board[6][6]==player)exact-=2;
@@ -228,66 +228,124 @@ class State{
             return exact;
         }
         int evaluate_Xtrap(){
-            int discs1 = 2 , discs2 = 2;
-            for(int i = 0 ; i < 8 ; i++){
+            int discs1 = 3 , discs2 = 3;
+            for(int i = 1; i < 7 ; i++){
                 if(board[i][i]==get_next_player(player)){
                     discs1=0;
                     break;
                 }
             }
-            for(int i = 0 ; i < 8 ; i++){
-                if(board[i][i]==get_next_player(player)){
+            for(int i = 1 ; i < 7 ; i++){
+                if(board[i][7-i]==get_next_player(player)){
                     discs2=0;
                     break;
                 }
             }
             return discs1+discs2;
         }
-        int evaluate_insider_disc(){
-            int discs = 0;
-            for(int i =0 ; i < 8 ; i++){
-                for(int j = 0 ; j < 8 ; j++){
-                    int ok = 1, exact = 1;
-                    for(Point dir:directions){
-                        Point p = dir+Point(i,j);
-                        if(is_spot_on_board(p)&&board[i][j]==EMPTY){
-                            ok = 0;
-                            break;
-                        }
-                        if(is_spot_on_board(p)&&board[i][j]==get_next_player(player)){
-                            exact = 0;
-                            break;
-                        }
-                    }
-                    if(ok)discs++;
-                    if(exact)discs++;
+        int evaluate_trap(){
+            int lu = 0, ru = 0, ld = 0, rd = 0, h = 0;
+            for(int i = 0 ; i < 2 ; i++){
+                if(board[0][0]==EMPTY){
+                    if(board[2][i]==player)lu++;
+                    if(board[i][2]==player)lu++;
                 }
+                if(board[0][7]==EMPTY){
+                    if(board[2][7-i]==player)ru++;
+                    if(board[i][5]==player)ru++;
+                }
+                if(board[7][0]==EMPTY){
+                    if(board[5][i]==player)ld++;
+                    if(board[6+i][2]==player)ld++;
+                }
+                if(board[7][7]==EMPTY){
+                    if(board[5][7-i]==player)rd++;
+                    if(board[6+i][5]==player)rd++;
+                }
+                
             }
-            return discs;
+            if(board[0][0]==EMPTY)
+                if(board[2][2]==player)lu++;
+            if(board[0][7]==EMPTY)
+                if(board[2][5]==player)ru++;
+            if(board[7][0]==EMPTY)
+                if(board[5][2]==player)ld++;
+            if(board[7][7]==EMPTY)
+                if(board[5][5]==player)rd++;
+            if(lu==5)h++;
+            if(ru==5)h++;
+            if(ld==5)h++;
+            if(rd==5)h++;
+            return h;
         }
         int evaluate_empty(){
             int h = 0;
             if(disc_count[EMPTY]>=20){
-                h = next_valid_spots.size();
+                h += next_valid_spots.size();
             }
             else{
-                h = disc_count[player]-disc_count[get_next_player(player)];
+                h += disc_count[player]-disc_count[get_next_player(player)];
+            }
+            return h;
+        }
+        int evaluate_danger_zone(){
+            int h = 0;
+            if(board[0][0]==3-player){
+                int side1 = 0, side2 = 0;
+                for(int i = 1 ; i <= 6 ; i++){
+                    if(board[0][i]==player)side1++;
+                }
+                for(int i = 1 ; i <= 6 ; i++){
+                    if(board[i][0]==player)side2++;
+                }
+                h+=std::max(side1,side2)+1;
+            }
+
+            if(board[7][0]==3-player){
+                int side1 = 0, side2 = 0;
+                for(int i = 1 ; i <= 6 ; i++){
+                    if(board[7][i]==player)side1++;
+                }
+                for(int i = 1 ; i <= 6 ; i++){
+                    if(board[i][0]==player)side2++;
+                }
+                h+=std::max(side1,side2)+1;
+            }
+            if(board[0][7]==3-player){
+                int side1 = 0, side2 = 0;
+                for(int i = 1 ; i <= 6 ; i++){
+                    if(board[0][i]==player)side1++;
+                }
+                for(int i = 1 ; i <= 6 ; i++){
+                    if(board[i][7]==player)side2++;
+                }
+                h+=std::max(side1,side2)+1;
+            }
+            if(board[7][7]==3-player){
+                int side1 = 0, side2 = 0;
+                for(int i = 1 ; i <= 6 ; i++){
+                    if(board[7][i]==player)side1++;
+                }
+                for(int i = 1 ; i <= 6 ; i++){
+                    if(board[i][7]==player)side2++;
+                }
+                h+=std::max(side1,side2)+1;
             }
             return h;
         }
         void setheuristic(){
             heuristic = 0;
-            //if(cur_player==get_next_player(player))return;
             if(winner==player)heuristic+=2;
             else heuristic -=2;
-            heuristic += next_valid_spots.size();
             int exact = evaluate_determined();
-            int weak_edge = evaluate_unbalanced_edge();
             int x_trap = evaluate_Xtrap();
             int empty = evaluate_empty();
+            int trap = evaluate_trap();
+            int danger = evaluate_danger_zone();
+            heuristic += trap;
             heuristic += x_trap;
             heuristic += empty;
-            heuristic -= weak_edge;
+            heuristic -= danger;
             heuristic += exact;
         }
         std::vector<Point> get_valid_spots() const {
@@ -389,10 +447,8 @@ void read_valid_spots(std::ifstream& fin) {
 void write_valid_spot(std::ofstream& fout) {
     int n_valid_spots = cur_next_valid_spots.size();
     int bestspot = -1;
-    //std::ofstream file("record.txt", std::ofstream::out | std::ofstream::app);
     int bestvalue=INT_MIN;
     for(int i = 0 ; i < n_valid_spots; i++){
-        //file<< "(" <<cur_next_valid_spots[i].x <<", " << cur_next_valid_spots[i].y<<") ";
         State tmp_state;
         Point nextspot = cur_next_valid_spots[i];
         tmp_state.update(nextspot);
@@ -404,9 +460,6 @@ void write_valid_spot(std::ofstream& fout) {
     }
     Point p  = cur_next_valid_spots[bestspot];
     fout << p.x << " " << p.y << std::endl;
-    //file<< bestspot<<std::endl;
-    //file<< p.x << " " << p.y <<std::endl;
-    //file.close();
     fout.flush();
 }
 
