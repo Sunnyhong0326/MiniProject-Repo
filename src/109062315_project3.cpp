@@ -162,7 +162,7 @@ class State{
         int evaluate_determined(){
             int exact = 0;
             if(board[0][0]==player){
-                exact+=1;
+                exact+=2;
                 for(int i = 1; i <= 6 ; i++){
                     if(board[i][0]!=player)break;
                     exact++;
@@ -172,8 +172,13 @@ class State{
                     exact++;
                 }
             }
+            else{
+                if(board[0][1]==player)exact--;
+                if(board[1][0]==player)exact--;
+                if(board[1][1]==player)exact-=2;
+            }
             if(board[0][7]==player){
-                exact+=1;
+                exact+=2;
                 for(int i = 1; i <= 6 ; i++){
                     if(board[i][7]!=player)break;
                     exact++;
@@ -183,8 +188,13 @@ class State{
                     exact++;
                 }
             }
+            else{
+                if(board[0][6]==player)exact--;
+                if(board[1][7]==player)exact--;
+                if(board[1][6]==player)exact-=2;
+            }
             if(board[7][0]==player){
-                exact+=1;
+                exact+=2;
                 for(int i = 1; i <= 6 ; i++){
                     if(board[7-i][0]!=player)break;
                     exact++;
@@ -194,8 +204,13 @@ class State{
                     exact++;
                 }
             }
+            else{
+                if(board[6][0]==player)exact--;
+                if(board[7][1]==player)exact--;
+                if(board[6][1]==player)exact-=2;
+            }
             if(board[7][7]==player){
-                exact+=1;
+                exact+=2;
                 for(int i = 1; i <= 6 ; i++){
                     if(board[7-i][7]!=player)break;
                     exact++;
@@ -204,6 +219,11 @@ class State{
                     if(board[7][7-i]!=player)break;
                     exact++;
                 }
+            }
+            else{
+                if(board[6][7]==player)exact--;
+                if(board[7][6]==player)exact--;
+                if(board[6][6]==player)exact-=2;
             }
             return exact;
         }
@@ -245,35 +265,28 @@ class State{
             }
             return discs;
         }
-        int evaluate_corner(){
+        int evaluate_empty(){
             int h = 0;
-            if(board[1][0]==player)h+=0.5;  
-            if(board[0][1]==player)h+=0.5;   
-            if(board[1][1]==player)h++;
-            if(board[6][1]==player)h++;
-            if(board[6][0]==player)h+=0.5;
-            if(board[7][1]==player)h+=0.5;
-            if(board[6][7]==player)h+=0.5;
-            if(board[7][6]==player)h+=0.5;
-            if(board[6][6]==player)h++;
-            if(board[0][6]==player)h+=0.5;
-            if(board[1][7]==player)h+=0.5;
-            if(board[1][6]==player)h++;
+            if(disc_count[EMPTY]>=20){
+                h = next_valid_spots.size();
+            }
+            else{
+                h = disc_count[player]-disc_count[get_next_player(player)];
+            }
             return h;
         }
         void setheuristic(){
             heuristic = 0;
             //if(cur_player==get_next_player(player))return;
-            if(winner==player)heuristic+=1;
-            heuristic += next_valid_spots.size()*2;
+            if(winner==player)heuristic+=2;
+            else heuristic -=2;
+            heuristic += next_valid_spots.size();
             int exact = evaluate_determined();
             int weak_edge = evaluate_unbalanced_edge();
             int x_trap = evaluate_Xtrap();
-            int insider = evaluate_insider_disc();
-            int corner = evaluate_corner();
-            heuristic -= corner;
+            int empty = evaluate_empty();
             heuristic += x_trap;
-            heuristic += insider;
+            heuristic += empty;
             heuristic -= weak_edge;
             heuristic += exact;
         }
@@ -291,11 +304,6 @@ class State{
             return valid_spots;
         }
         void update(Point &p){
-            /*if(!is_spot_valid(p)) {
-                winner = get_next_player(cur_player);
-                done = true;
-                return;
-            }*/
             set_disc(p, cur_player);
             disc_count[cur_player]++;
             disc_count[EMPTY]--;
@@ -375,79 +383,30 @@ void read_valid_spots(std::ifstream& fin) {
     int x, y;
     for (int i = 0; i < n_valid_spots; i++) {
         fin >> x >> y;
-        Point cur(x,y);
-        if(cur==Point(1,1)||cur==Point(1,6)||cur==Point(6,1)||cur==Point(6,6)){
-            cur_x_spots.push_back({x,y});
-        }
-        else 
-            cur_next_valid_spots.push_back(cur);
+        cur_next_valid_spots.push_back({x,y});
     }
 }
 void write_valid_spot(std::ofstream& fout) {
     int n_valid_spots = cur_next_valid_spots.size();
-    int bestspot = -1, ok = 0, corner = 0;
-    int bestvalue=INT_MIN, best_determined_value = 0, turn_discs = 0, best_corner_value = 0;
-    State cur_state;
+    int bestspot = -1;
+    //std::ofstream file("record.txt", std::ofstream::out | std::ofstream::app);
+    int bestvalue=INT_MIN;
     for(int i = 0 ; i < n_valid_spots; i++){
+        //file<< "(" <<cur_next_valid_spots[i].x <<", " << cur_next_valid_spots[i].y<<") ";
         State tmp_state;
         Point nextspot = cur_next_valid_spots[i];
         tmp_state.update(nextspot);
-        int add = tmp_state.disc_count[player]-cur_state.disc_count[player];
-        if((nextspot==Point(1,0)||nextspot==Point(0,1))&&tmp_state.board[0][0]!=player){
-            cur_x_spots.push_back(nextspot);
-            continue;
-        }
-        if((nextspot==Point(1,7)||nextspot==Point(0,6))&&tmp_state.board[0][7]!=player){
-            cur_x_spots.push_back(nextspot);
-            continue;
-        }
-        if((nextspot==Point(6,0)||nextspot==Point(7,1))&&tmp_state.board[7][0]!=player){
-            cur_x_spots.push_back(nextspot);
-            continue;
-        }
-        if((nextspot==Point(7,6)||nextspot==Point(6,7))&&tmp_state.board[7][7]!=player){
-            cur_x_spots.push_back(nextspot);
-            continue;
-        }
-        if(nextspot==Point(0,0)||nextspot==Point(7,0)||nextspot==Point(0,7)||nextspot==Point(7,7)){
-            if(add>best_corner_value){
-                bestspot = i;
-                best_corner_value = add;
-            }  
-            corner = 1;
-        }
-        if(corner)continue;
-        int determined_value = tmp_state.evaluate_determined()-cur_state.evaluate_determined();
-        if(determined_value>best_determined_value&&add>turn_discs){
-            ok = 1;
-            bestspot = i;
-            best_determined_value = determined_value;
-            turn_discs = add;
-        }
-        if(ok)continue;
         int cur_value = minimax(tmp_state, 5, 0, INT_MIN, INT_MAX);
         if(bestvalue<=cur_value){
             bestvalue = cur_value;
             bestspot = i;
         }
     }
-    Point p ;
-    if(bestspot!=-1)p = cur_next_valid_spots[bestspot];
-    else{
-        int x_spot = cur_x_spots.size();
-        int better = 0, worse_spot = -1;
-        for(int i = 0 ; i < x_spot ; i++){
-            State tmp_state;
-            tmp_state.update(cur_x_spots[i]);
-            int cur_value = minimax(tmp_state, 5, 0, INT_MIN, INT_MAX);
-            if(better<=cur_value){
-                worse_spot = i;
-                better = cur_value;
-            }
-        }
-        if(worse_spot!=-1)p = cur_x_spots[worse_spot];
-    }
+    Point p  = cur_next_valid_spots[bestspot];
     fout << p.x << " " << p.y << std::endl;
+    //file<< bestspot<<std::endl;
+    //file<< p.x << " " << p.y <<std::endl;
+    //file.close();
     fout.flush();
 }
 
