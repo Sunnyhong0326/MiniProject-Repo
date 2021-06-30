@@ -162,68 +162,88 @@ class State{
         int evaluate_determined(){
             int exact = 0;
             if(board[0][0]==player){
-                exact+=2;
+                exact+=3;
                 for(int i = 1; i <= 6 ; i++){
                     if(board[i][0]!=player)break;
-                    exact++;
+                    exact+=2;
                 }
                 for(int i = 1 ; i <= 6 ; i++){
                     if(board[0][i]!=player)break;
-                    exact++;
+                    exact+=2;
                 }
             }
             else if(board[0][0]==EMPTY){
-                if(board[0][1]==player)exact--;
-                if(board[1][0]==player)exact--;
-                if(board[1][1]==player)exact-=2;
+                if(board[0][1]==player)exact-=2;
+                if(board[1][0]==player)exact-=2;
+                if(board[1][1]==player)exact-=3;
+            }
+            else if(board[0][0]==get_next_player(player)){
+                if(board[0][1]==player&&board[0][2]==get_next_player(player))exact+=2;
+                if(board[1][0]==player&&board[2][0]==get_next_player(player))exact+=2;
+                else exact-=3;
             }
             if(board[0][7]==player){
-                exact+=2;
+                exact+=3;
                 for(int i = 1; i <= 6 ; i++){
                     if(board[i][7]!=player)break;
-                    exact++;
+                    exact+=2;
                 }
                 for(int i = 1 ; i <= 6 ; i++){
                     if(board[0][7-i]!=player)break;
-                    exact++;
+                    exact+=2;
                 }
             }
             else if(board[0][7]==EMPTY){
-                if(board[0][6]==player)exact--;
-                if(board[1][7]==player)exact--;
-                if(board[1][6]==player)exact-=2;
+                if(board[0][6]==player)exact-=2;
+                if(board[1][7]==player)exact-=2;
+                if(board[1][6]==player)exact-=3;
+            }
+            else if(board[0][7]==get_next_player(player)){
+                if(board[0][6]==player&&board[0][5]==get_next_player(player))exact+=2;
+                if(board[1][7]==player&&board[2][7]==get_next_player(player))exact+=2;
+                else exact-=3;
             }
             if(board[7][0]==player){
-                exact+=2;
+                exact+=3;
                 for(int i = 1; i <= 6 ; i++){
                     if(board[7-i][0]!=player)break;
-                    exact++;
+                    exact+=2;
                 }
                 for(int i = 1 ; i <= 6 ; i++){
                     if(board[7][i]!=player)break;
-                    exact++;
+                    exact+=2;
                 }
             }
             else if(board[7][0]==EMPTY){
-                if(board[6][0]==player)exact--;
-                if(board[7][1]==player)exact--;
-                if(board[6][1]==player)exact-=2;
+                if(board[6][0]==player)exact-=2;
+                if(board[7][1]==player)exact-=2;
+                if(board[6][1]==player)exact-=3;
+            }
+            else if(board[7][0]==get_next_player(player)){
+                if(board[7][1]==player&&board[7][2]==get_next_player(player))exact+=2;
+                if(board[6][0]==player&&board[5][0]==get_next_player(player))exact+=2;
+                else exact-=3;
             }
             if(board[7][7]==player){
-                exact+=2;
+                exact+=3;
                 for(int i = 1; i <= 6 ; i++){
                     if(board[7-i][7]!=player)break;
-                    exact++;
+                    exact+=2;
                 }
                 for(int i = 1 ; i <= 6 ; i++){
                     if(board[7][7-i]!=player)break;
-                    exact++;
+                    exact+=2;
                 }
             }
             else if(board[7][7]==EMPTY){
-                if(board[6][7]==player)exact--;
-                if(board[7][6]==player)exact--;
-                if(board[6][6]==player)exact-=2;
+                if(board[6][7]==player)exact-=2;
+                if(board[7][6]==player)exact-=2;
+                if(board[6][6]==player)exact-=3;
+            }
+            else if(board[7][7]==get_next_player(player)){
+                if(board[6][7]==player&&board[5][7]==get_next_player(player))exact+=2;
+                if(board[7][6]==player&&board[7][5]==get_next_player(player))exact+=2;
+                else exact-=3;
             }
             return exact;
         }
@@ -243,48 +263,79 @@ class State{
             }
             return discs1+discs2;
         }
-        int evaluate_trap(){
-            int lu = 0, ru = 0, ld = 0, rd = 0, h = 0;
-            for(int i = 0 ; i < 2 ; i++){
-                if(board[0][0]==EMPTY){
-                    if(board[2][i]==player)lu++;
-                    if(board[i][2]==player)lu++;
+        int evaluate_weak_side(){
+            int side = 0 , left = 0, right = 0 , up = 0, down = 0;
+            if(board[0][0]!=player&&board[0][7]!=player){
+                for(int i = 1; i < 7 ; i++){
+                    if(board[0][i]==player){
+                        up++;
+                    }
                 }
-                if(board[0][7]==EMPTY){
-                    if(board[2][7-i]==player)ru++;
-                    if(board[i][5]==player)ru++;
-                }
-                if(board[7][0]==EMPTY){
-                    if(board[5][i]==player)ld++;
-                    if(board[6+i][2]==player)ld++;
-                }
-                if(board[7][7]==EMPTY){
-                    if(board[5][7-i]==player)rd++;
-                    if(board[6+i][5]==player)rd++;
-                }
-                
             }
-            if(board[0][0]==EMPTY)
-                if(board[2][2]==player)lu++;
-            if(board[0][7]==EMPTY)
-                if(board[2][5]==player)ru++;
-            if(board[7][0]==EMPTY)
-                if(board[5][2]==player)ld++;
-            if(board[7][7]==EMPTY)
-                if(board[5][5]==player)rd++;
-            if(lu==5)h++;
-            if(ru==5)h++;
-            if(ld==5)h++;
-            if(rd==5)h++;
-            return h;
+            if(up!=6)side+=3;
+            else side+=2;
+            if(board[0][0]!=player&&board[7][0]!=player){
+                for(int i = 1; i < 7 ; i++){
+                    if(board[i][0]==player){
+                        left++;
+                    }
+                
+                } 
+            }
+            if(left!=6)side+=3;
+            else side+=2;
+            if(board[7][0]!=player&&board[7][7]!=player){
+                for(int i = 1; i < 7 ; i++){
+                    if(board[7][i]==player){
+                        right++;
+                    }
+                }
+            }
+            if(right!=6)side+=3;
+            else side+=2;
+            if(board[0][7]!=player&&board[7][7]!=player){
+                for(int i = 1; i < 7 ; i++){
+                    if(board[i][7]==player){
+                        down++;
+                    }
+                }
+            }
+            if(down!=6)side+=3;
+            else side+=2;
+            int h = 0;
+            if(board[0][1]==player&&board[0][3]==player&&board[0][5]==player){
+                if(board[0][2]==3-player||board[0][4]==3-player)h+=4;
+            }
+            if(board[0][2]==player&&board[0][4]==player&&board[0][6]==player){
+                if(board[0][3]==3-player||board[0][5]==3-player)h+=4;
+            }
+            if(board[1][0]==player&&board[3][0]==player&&board[5][0]==player){
+                if(board[2][0]==3-player||board[4][0]==3-player)h+=4;
+            }
+            if(board[2][0]==player&&board[4][0]==player&&board[6][0]==player){
+                if(board[3][0]==3-player||board[5][0]==3-player)h+=4;
+            }
+            if(board[7][1]==player&&board[7][3]==player&&board[7][5]==player){
+                if(board[7][2]==3-player||board[7][4]==3-player)h+=4;
+            }
+            if(board[7][2]==player&&board[7][4]==player&&board[7][6]==player){
+                if(board[7][3]==3-player||board[7][5]==3-player)h+=4;
+            }
+            if(board[1][7]==player&&board[3][7]==player&&board[5][7]==player){
+                if(board[2][7]==3-player||board[4][7]==3-player)h+=4;
+            }
+            if(board[2][7]==player&&board[4][7]==player&&board[6][7]==player){
+                if(board[3][7]==3-player||board[5][7]==3-player)h+=4;
+            }
+            return side+h;
         }
         int evaluate_empty(){
             int h = 0;
             if(disc_count[EMPTY]>=20){
-                h += next_valid_spots.size();
+                h += next_valid_spots.size()*2;
             }
             else{
-                h += disc_count[player]-disc_count[get_next_player(player)];
+                h += (disc_count[player]-disc_count[get_next_player(player)])*2;
             }
             return h;
         }
@@ -331,18 +382,17 @@ class State{
                 }
                 h+=std::max(side1,side2)+1;
             }
-            return h;
+            return 2*h;
         }
         void setheuristic(){
             heuristic = 0;
             if(winner==player)heuristic+=2;
-            else heuristic -=2;
             int exact = evaluate_determined();
             int x_trap = evaluate_Xtrap();
             int empty = evaluate_empty();
-            int trap = evaluate_trap();
             int danger = evaluate_danger_zone();
-            heuristic += trap;
+            int weak = evaluate_weak_side();
+            heuristic -= weak;
             heuristic += x_trap;
             heuristic += empty;
             heuristic -= danger;
@@ -456,6 +506,7 @@ void write_valid_spot(std::ofstream& fout) {
         if(bestvalue<=cur_value){
             bestvalue = cur_value;
             bestspot = i;
+            fout << cur_next_valid_spots[bestspot].x << " " << cur_next_valid_spots[bestspot].y<<std::endl;
         }
     }
     Point p  = cur_next_valid_spots[bestspot];
